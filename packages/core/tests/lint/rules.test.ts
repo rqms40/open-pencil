@@ -2,10 +2,13 @@ import { describe, expect, test } from 'bun:test'
 
 import { createLinter, type LintMessage } from '@open-pencil/core/lint'
 import { SceneGraph, type SceneNode } from '@open-pencil/scene-graph'
+import { parseColor } from '@open-pencil/scene-graph/color'
 
 const WHITE = { r: 1, g: 1, b: 1, a: 1 }
 const BLUE = { r: 0.23, g: 0.51, b: 0.96, a: 1 }
 const LIGHT_GRAY = { r: 0.8, g: 0.8, b: 0.8, a: 1 }
+/** #193E33, about 11.8:1 against white. */
+const DARK_GREEN = parseColor('#193E33')
 
 function solid(color: SceneNode['fills'][number]['color']): SceneNode['fills'] {
   return [{ type: 'SOLID', visible: true, opacity: 1, color }]
@@ -135,6 +138,137 @@ describe('color-contrast', () => {
 
     expect(messages.map((message) => message.nodeId)).toEqual([mixed.id])
     expect(messages[0]?.data?.minRatio).toBe(4.5)
+  })
+
+  test('uses an opaque rectangle painted behind the text instead of the white frame', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const frame = graph.createNode('FRAME', pageId, {
+      name: 'Card',
+      width: 240,
+      height: 120,
+      fills: solid(WHITE)
+    })
+    graph.createNode('RECTANGLE', frame.id, {
+      name: 'Background',
+      width: 240,
+      height: 120,
+      fills: solid(DARK_GREEN)
+    })
+    graph.createNode('TEXT', frame.id, {
+      name: 'Hello',
+      x: 24,
+      y: 40,
+      width: 80,
+      height: 32,
+      text: 'Hello',
+      fontSize: 24,
+      fills: solid(WHITE)
+    })
+
+    expect(lint(graph, 'color-contrast')).toEqual([])
+  })
+
+  test('uses an opaque shape behind a fill-less frame that holds the text', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const card = graph.createNode('FRAME', pageId, {
+      name: 'Card',
+      width: 300,
+      height: 160,
+      fills: solid(WHITE)
+    })
+    graph.createNode('RECTANGLE', card.id, {
+      name: 'Background',
+      x: 10,
+      y: 8,
+      width: 240,
+      height: 120,
+      fills: solid(DARK_GREEN)
+    })
+    const block = graph.createNode('FRAME', card.id, {
+      name: 'Block',
+      x: 10,
+      y: 8,
+      width: 240,
+      height: 120
+    })
+    graph.createNode('TEXT', block.id, {
+      name: 'Hello',
+      x: 24,
+      y: 40,
+      width: 80,
+      height: 32,
+      text: 'Hello',
+      fontSize: 24,
+      fills: solid(WHITE)
+    })
+
+    expect(lint(graph, 'color-contrast')).toEqual([])
+  })
+
+  test('does not treat a dark layer painted above the text as its background', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const frame = graph.createNode('FRAME', pageId, {
+      name: 'Card',
+      width: 240,
+      height: 120,
+      fills: solid(WHITE)
+    })
+    const label = graph.createNode('TEXT', frame.id, {
+      name: 'Hello',
+      x: 24,
+      y: 40,
+      width: 80,
+      height: 32,
+      text: 'Hello',
+      fontSize: 24,
+      fills: solid(WHITE)
+    })
+    graph.createNode('RECTANGLE', frame.id, {
+      name: 'Cover',
+      width: 240,
+      height: 120,
+      fills: solid(DARK_GREEN)
+    })
+
+    const messages = lint(graph, 'color-contrast')
+
+    expect(messages.map((message) => message.nodeId)).toEqual([label.id])
+    expect(messages[0]?.data).toMatchObject({ foreground: '#FFFFFF', background: '#FFFFFF' })
+  })
+
+  test('keeps the frame fill when a sibling covers only part of the text', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const frame = graph.createNode('FRAME', pageId, {
+      name: 'Card',
+      width: 240,
+      height: 120,
+      fills: solid(WHITE)
+    })
+    graph.createNode('RECTANGLE', frame.id, {
+      name: 'Stripe',
+      width: 40,
+      height: 120,
+      fills: solid(DARK_GREEN)
+    })
+    const label = graph.createNode('TEXT', frame.id, {
+      name: 'Hello',
+      x: 24,
+      y: 40,
+      width: 80,
+      height: 32,
+      text: 'Hello',
+      fontSize: 24,
+      fills: solid(WHITE)
+    })
+
+    const messages = lint(graph, 'color-contrast')
+
+    expect(messages.map((message) => message.nodeId)).toEqual([label.id])
+    expect(messages[0]?.data).toMatchObject({ foreground: '#FFFFFF', background: '#FFFFFF' })
   })
 })
 

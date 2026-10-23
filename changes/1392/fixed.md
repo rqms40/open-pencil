@@ -1,0 +1,1 @@
+- Color contrast measures text against an opaque shape painted behind it, so white text on a dark rectangle inside a white frame keeps its real ratio.

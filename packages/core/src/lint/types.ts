@@ -82,6 +82,7 @@ export interface LintNode {
   y: number
   rotation: number
   visible: boolean
+  opacity: number
   locked: boolean
   layoutMode: string
   layoutPositioning: 'AUTO' | 'ABSOLUTE'
