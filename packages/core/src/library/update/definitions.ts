@@ -288,7 +288,7 @@ export function updateLibraryDefinitions(
           component: (id, previous) => copyOf(id, previous, scope),
           // The layers an instance's overrides name are inside the component it draws.
           layer: (id, component) => tree.get(id) ?? copyOf(id, null, component),
-          // A connector inside a definition follows the layers of its own tree.
+          // A connector end, and a text link, follow the layers of this definition's tree.
           endpoint: (id) => tree.get(id) ?? id,
           // Variables are the revision's until the resources below are brought in.
           variable: (id) => id

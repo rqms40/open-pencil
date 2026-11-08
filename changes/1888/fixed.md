@@ -1,0 +1,1 @@
+- A text link to another layer follows that layer when the layers are copied, including a component inserted from a library.

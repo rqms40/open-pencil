@@ -1,8 +1,10 @@
 import { isEqual, mapValues } from 'es-toolkit'
 
 import { componentPropertyDefinitions } from '../components/properties'
+import { copyStyleRuns } from '../copy'
 import type { SceneGraph } from '../graph'
 import { remapInstanceOverrideState } from '../instances/overrides'
+import { remapStyleRunReferences } from '../text/references'
 import type { ComponentPropertyDefinition, SceneNode } from '../types'
 
 /** How a layer's references to other layers are resolved anew. */
@@ -11,7 +13,7 @@ export interface ReferenceResolvers {
   component: (id: string, previous: string | null) => string
   /** The layer an override names now; `component` is the one its instance now draws. */
   layer: (id: string, component: string | null) => string
-  /** The layer a connector's end follows now. */
+  /** The layer a connector end or a text link names now. One left behind keeps its id. */
   endpoint: (id: string) => string
   variable: (id: string) => string
 }
@@ -30,9 +32,10 @@ export function instanceSwapPropertyIds(nodes: Iterable<SceneNode>): Set<string>
 /**
  * `node`'s references to other layers, resolved anew: its main component, the layers its
  * overrides change and the components they swap in, the components its instance-swap properties
- * default to or are set to, and the layers its connector ends follow. `previous` is the layer
- * whose references these replace, so a resolver can keep what it already pointed at. Only the
- * fields whose references change are returned: every write is an update collaboration sends.
+ * default to or are set to, the layers its connector ends follow, and the layers its text links
+ * to. `previous` is the layer whose references these replace, so a resolver can keep what it
+ * already pointed at. Only the fields whose references change are returned: every write is an
+ * update collaboration sends.
  */
 export function resolvedReferences(
   node: SceneNode,
@@ -81,16 +84,26 @@ export function resolvedReferences(
     const nodeId = endpoint?.nodeId ? resolve.endpoint(endpoint.nodeId) : null
     if (endpoint && nodeId && nodeId !== endpoint.nodeId) changes[field] = { ...endpoint, nodeId }
   }
+  // A text link follows a layer copied with it and keeps a layer the copy leaves behind, as a
+  // paste's link does (`prepareNodeTransfer`). Connector ends resolve the same way.
+  if (node.styleRuns.some((run) => run.style.hyperlink?.type === 'NODE')) {
+    const styleRuns = remapStyleRunReferences(node.styleRuns, {
+      variable: (id) => id,
+      style: (id) => id,
+      node: resolve.endpoint
+    })
+    if (!isEqual(styleRuns, node.styleRuns)) changes.styleRuns = copyStyleRuns(styleRuns)
+  }
   return changes
 }
 
 /**
  * Points copied layers at one another, as `prepareNodeTransfer` does for a paste: an instance's
  * main component, the layers its overrides change and the components they swap in, the
- * components an instance-swap property defaults to or is set to, and the layers a connector's
- * ends follow. `mappedIds` maps each copied layer to its copy, such as a library copy or a design
- * JSX render folded into the layers it replaces; a reference outside the copy stays as it is, and
- * so do variable IDs, since the copies keep their source's variables.
+ * components an instance-swap property defaults to or is set to, the layers a connector's ends
+ * follow, and a text link to a layer. `mappedIds` maps each copied layer to its copy, such as a
+ * library copy or a design JSX render folded into the layers it replaces; a reference outside
+ * the copy stays as it is, and so do variable IDs, since the copies keep their source's variables.
  */
 export function remapCopiedReferences(
   graph: SceneGraph,
