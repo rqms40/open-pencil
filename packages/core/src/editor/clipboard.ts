@@ -24,7 +24,11 @@ import {
   requestedPasteTarget,
   resolvePasteTarget
 } from './clipboard/paste/target'
-import { createClipboardPlacementActions, type ClipboardPlacement } from './clipboard/placement'
+import {
+  createClipboardPlacementActions,
+  importedCanvasTransforms,
+  type ClipboardPlacement
+} from './clipboard/placement'
 import { createClipboardWebActions } from './clipboard/web'
 import { acceptsChildren, prepareSlotEdits } from './components/slots'
 import { collectSubtrees, restoreSubtree, snapshotSubtree } from './history/subtree'
@@ -194,6 +198,12 @@ export function createClipboardActions(ctx: EditorContext) {
         if (created.length === 0) return null
 
         if (replacementTargets.length > 0) {
+          // Import parents the layers into the target first. Put back the canvas orientation
+          // the clipboard stored before the replacement moves onto the target, as in-app paste does.
+          placementActions.keepCanvasTransforms(
+            created,
+            importedCanvasTransforms(ctx.graph, created)
+          )
           replaceTargetsWithCreated(ctx, created, replacementTargets, prevSelection, operation)
         } else {
           placementActions.placeForeignPaste(created, pasteTarget, cursorPos)

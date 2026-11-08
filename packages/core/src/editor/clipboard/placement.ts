@@ -55,6 +55,18 @@ export function clipboardPlacement(
   return { transforms, sources }
 }
 
+/**
+ * Canvas transforms of layers just imported from a Figma clipboard. The clipboard draws each
+ * layer against an upright canvas, and import keeps that matrix as the layer's own even after
+ * the layer is parented into the target.
+ */
+export function importedCanvasTransforms(graph: SceneGraph, nodeIds: readonly string[]): Mat3[] {
+  return nodeIds.map((id) => {
+    const node = graph.getNode(id)
+    return node ? getNodeLocalMatrix(node) : Matrix.identity()
+  })
+}
+
 /** The canvas box around layers, through every rotation and flip above them. */
 function canvasBounds(graph: SceneGraph, nodes: readonly SceneNode[]): Rect {
   return getAxisAlignedBoundsInParent(nodes, graph.rootId, graph)

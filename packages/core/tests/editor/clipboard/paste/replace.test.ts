@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 
 import { createEditor, type Editor } from '@open-pencil/core'
+import { buildFigmaClipboardHTML } from '@open-pencil/core/clipboard'
+import { initCodec } from '@open-pencil/kiwi/fig/codec'
 import { getAxisAlignedWorldBounds, getWorldMatrix } from '@open-pencil/scene-graph/coordinate'
 
 /** What copying a layer of `source` puts on the clipboard, as in-app paste reads it. */
@@ -216,6 +218,52 @@ describe('paste to replace', () => {
       expect(editor.graph.getNode(createdId)?.parentId).toBe(frame.id)
       expect(canvasBox(editor, createdId)).toMatchObject({ x: start.x, y: start.y })
       expect(canvasAxes(editor, createdId)).toEqual([1, 0, 0, 1])
+      editor.undo.undo()
+    }
+  })
+
+  test('a Figma clipboard paste to replace stays as copied inside a rotated or flipped frame', async () => {
+    await initCodec()
+    const source = createEditor()
+    const pasted = source.graph.createNode('RECTANGLE', source.state.currentPageId, {
+      name: 'Pasted',
+      x: 240,
+      y: 180,
+      width: 20,
+      height: 20
+    })
+    const html = await buildFigmaClipboardHTML([pasted], source.graph)
+    if (!html) throw new Error('Missing Figma clipboard HTML')
+
+    const editor = createEditor()
+    const frame = editor.graph.createNode('FRAME', editor.state.currentPageId, {
+      x: 50,
+      y: 50,
+      width: 300,
+      height: 300
+    })
+    const target = createTarget(editor, frame.id)
+    for (const transform of [
+      {},
+      { rotation: 90, flipX: false, flipY: false },
+      { rotation: 30, flipX: false, flipY: false },
+      { rotation: 0, flipX: false, flipY: true },
+      { rotation: 0, flipX: true, flipY: false }
+    ]) {
+      editor.graph.updateNode(frame.id, transform)
+      const start = canvasBox(editor, target.id)
+      editor.select([target.id])
+      await editor.pasteFromHTML(html, undefined, { replaceSelection: true })
+      const [createdId] = editor.state.selectedIds
+      // Figma keeps the target's canvas top-left, and the replacement as it was drawn when copied
+      // (desktop 126).
+      expect(editor.graph.getNode(createdId)?.parentId).toBe(frame.id)
+      expect(canvasBox(editor, createdId)).toMatchObject({ x: start.x, y: start.y })
+      expect(canvasAxes(editor, createdId)).toEqual([1, 0, 0, 1])
+      editor.undo.undo()
+      editor.undo.redo()
+      expect(canvasAxes(editor, createdId)).toEqual([1, 0, 0, 1])
+      expect(canvasBox(editor, createdId)).toMatchObject({ x: start.x, y: start.y })
       editor.undo.undo()
     }
   })
