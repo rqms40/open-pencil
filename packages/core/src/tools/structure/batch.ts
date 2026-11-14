@@ -6,6 +6,9 @@ import { defineTool, nodeNotFound, toolNumber } from '#core/tools/schema'
 
 const nonNegative = () => toolNumber(v.pipe(v.number(), v.minValue(0)))
 
+/** A layer name: text, or the digits of a finite number an agent passed for it. */
+const layerNameSchema = v.union([v.string(), v.pipe(v.number(), v.finite(), v.transform(String))])
+
 /** Every prop an operation may set; anything else rejects the whole batch. */
 const batchPropsSchema = v.strictObject({
   spacing: v.optional(nonNegative()),
@@ -17,7 +20,7 @@ const batchPropsSchema = v.strictObject({
   sizing_horizontal: v.optional(v.picklist(['FIXED', 'HUG', 'FILL'])),
   sizing_vertical: v.optional(v.picklist(['FIXED', 'HUG', 'FILL'])),
   grow: v.optional(nonNegative()),
-  name: v.optional(v.string()),
+  name: v.optional(layerNameSchema),
   visible: v.optional(v.boolean()),
   corner_radius: v.optional(nonNegative()),
   opacity: v.optional(toolNumber(v.pipe(v.number(), v.minValue(0), v.maxValue(1)))),

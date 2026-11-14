@@ -27,6 +27,19 @@ describe('lintGraph roots', () => {
   })
 })
 
+describe('stored names', () => {
+  test('lints a document whose layer name is not a string', () => {
+    const graph = new SceneGraph()
+    const frame = graph.createNode('FRAME', graph.getPages()[0].id, { width: 10, height: 10 })
+    Object.assign(frame, { name: 9 })
+
+    const linted = createLinter({ preset: 'recommended' }).lintGraph(graph)
+
+    expect(linted.messages.some((message) => message.nodeId === frame.id)).toBe(true)
+    expect(linted.messages.every((message) => typeof message.nodeName === 'string')).toBe(true)
+  })
+})
+
 describe('FigJam layers', () => {
   // A sticky note's body, author line, and fill are FigJam's fixed choices, not design decisions.
   test('leaves sticky notes and what they generate out of every rule', () => {

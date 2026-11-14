@@ -64,6 +64,17 @@ describe('batch_update', () => {
     expect(undo.canUndo).toBe(false)
   })
 
+  test('stores a numeric name as its digits', () => {
+    const { figma, editor, rectangle } = setup()
+    const operations = JSON.stringify([{ id: rectangle.id, props: { name: 9 } }])
+
+    expect(executeAtomicTool(editor, figma, batchUpdate, { operations })).toEqual({
+      updated: 1,
+      results: [{ id: rectangle.id, updated: ['name'] }]
+    })
+    expect(rectangle.name).toBe('9')
+  })
+
   test('changes nothing when a headless call names a missing layer', () => {
     const { figma, rectangle } = setup()
     const operations = batch(rectangle.id, 'missing', {})

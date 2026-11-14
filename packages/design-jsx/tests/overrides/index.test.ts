@@ -86,6 +86,20 @@ describe('grid placement', () => {
   })
 })
 
+describe('layer names', () => {
+  test('keeps a text name and the digits of a number', () => {
+    expect(propsToOverrides({ name: 'Card' }, false, 'NONE').name).toBe('Card')
+    expect(propsToOverrides({ name: 9 }, false, 'NONE').name).toBe('9')
+    expect(propsToOverrides({ name: 0 }, false, 'NONE').name).toBe('0')
+  })
+
+  test('leaves a name that is not text or a finite number unset', () => {
+    expect(propsToOverrides({ name: '' }, false, 'NONE').name).toBeUndefined()
+    expect(propsToOverrides({ name: Number.NaN }, false, 'NONE').name).toBeUndefined()
+    expect(propsToOverrides({ name: { bad: true } }, false, 'NONE').name).toBeUndefined()
+  })
+})
+
 describe('layout bounds', () => {
   test('keeps a negative gap and padding, which overlap children', () => {
     expect(propsToOverrides({ flex: 'row', gap: -8, p: -4 }, false, 'NONE')).toMatchObject({

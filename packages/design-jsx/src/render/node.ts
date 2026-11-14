@@ -8,7 +8,7 @@ import { renderRekaNode } from '../behaviours/render'
 import { componentIdNamed, renderInstanceNode } from '../components/instances'
 import { bindProperties, inferComponentSetProperties } from '../components/properties'
 import { elementNodeType, elementOwnLayer, type OwnLayerRenderer } from '../elements'
-import { applySizeOverrides, propsToOverrides, shapeOverrides } from '../overrides'
+import { applySizeOverrides, layerName, propsToOverrides, shapeOverrides } from '../overrides'
 import { placeVectorPaths } from '../overrides/vector'
 import type { LayerRefs } from '../refs'
 import { readElementProps } from '../schema'
@@ -113,7 +113,8 @@ function placeArtwork<Artwork>(
 ): SceneNode {
   const parentLayout = graph.getNode(parentId)?.layoutMode ?? 'NONE'
   const overrides: Partial<SceneNode> = {}
-  if (props.label) overrides.name = props.label as string
+  const label = layerName(props.label)
+  if (label !== undefined) overrides.name = label
   applyIconSize(props, overrides, parentLayout, size)
   const modes = variableModes(graph, props.mode)
   if (modes) overrides.variableModes = modes

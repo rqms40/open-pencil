@@ -1,0 +1,1 @@
+- A layer name written as a number, such as design JSX `name={9}`, is stored as text, and linting a document that already has a non-string name no longer crashes.

@@ -1,7 +1,19 @@
 import { compact } from 'es-toolkit/array'
+
+/**
+ * A layer name as text. A name is a string; one saved as a number before that was required
+ * is the digits of that number, and anything else is no name, so a rule never calls a string
+ * method on it.
+ */
+export function layerNameText(name: unknown): string {
+  if (typeof name === 'string') return name
+  if (typeof name === 'number' && Number.isFinite(name)) return String(name)
+  return ''
+}
+
 export function isDefaultName(name: string): boolean {
   return /^(Frame|Rectangle|Ellipse|Line|Text|Group|Vector|Polygon|Star|Section|Component|Instance|Slice)\s*\d*$/i.test(
-    name
+    layerNameText(name)
   )
 }
 
@@ -12,7 +24,7 @@ export function isDefaultName(name: string): boolean {
  */
 export function nameWords(name: string): string[] {
   return compact(
-    name
+    layerNameText(name)
       .replaceAll(/([a-z\d])([A-Z])/g, '$1 $2')
       .replaceAll(/([a-z])(\d)/gi, '$1 $2')
       .toLowerCase()

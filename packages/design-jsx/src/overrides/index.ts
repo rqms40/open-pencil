@@ -51,6 +51,16 @@ function numberProp(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
+/**
+ * A layer name an author set: the text, or the digits of a finite number (`name={9}`).
+ * Anything else is left unset, so a name stored on a layer is a string.
+ */
+export function layerName(value: unknown): string | undefined {
+  if (typeof value === 'string') return value.length > 0 ? value : undefined
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return undefined
+}
+
 /** A size or radius as an element may set it: non-negative and bounded. */
 function layoutLengthProp(value: unknown): number | undefined {
   const length = numberProp(value)
@@ -550,7 +560,8 @@ export function propsToOverrides(
   props = normalizeStyleProps(props)
   const o: Partial<SceneNode> = {}
 
-  if (props.name) o.name = props.name as string
+  const name = layerName(props.name)
+  if (name !== undefined) o.name = name
 
   const { w, h } = applySizeOverrides(props, o, parentLayout)
   applyVisualOverrides(props, o)

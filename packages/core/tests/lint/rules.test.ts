@@ -12,6 +12,11 @@ function solid(color: SceneNode['fills'][number]['color']): SceneNode['fills'] {
   return [{ type: 'SOLID', visible: true, opacity: 1, color }]
 }
 
+/** Puts `name` on `node` as a file from before names were always strings would. */
+function storeLayerName(node: { name: string }, name: string | number): void {
+  Object.assign(node, { name })
+}
+
 function lint(graph: SceneGraph, rule: string): LintMessage[] {
   const pageId = graph.getPages()[0].id
   return createLinter({ rules: [rule], config: { rules: { [rule]: 'warning' } } }).lintGraph(
@@ -571,6 +576,19 @@ describe('touch-target-size', () => {
   test('does not treat icons as touch targets on their own', () => {
     const graph = new SceneGraph()
     graph.createNode('FRAME', graph.getPages()[0].id, { name: 'Icon', width: 16, height: 16 })
+    expect(lint(graph, 'touch-target-size')).toEqual([])
+  })
+
+  test('reads a name stored as a number instead of crashing', () => {
+    const graph = new SceneGraph()
+    const frame = graph.createNode('FRAME', graph.getPages()[0].id, {
+      name: 'Button',
+      width: 16,
+      height: 16
+    })
+    // A document saved before a name had to be a string.
+    storeLayerName(frame, 9)
+
     expect(lint(graph, 'touch-target-size')).toEqual([])
   })
 })

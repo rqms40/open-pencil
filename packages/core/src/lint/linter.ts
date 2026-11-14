@@ -16,7 +16,7 @@ import type {
   RuleContext,
   Severity
 } from './types'
-import { getNodePath } from './utils'
+import { getNodePath, layerNameText } from './utils'
 
 /**
  * How many of the text's characters some run styles. Runs are clipped to the text, which an
@@ -133,7 +133,7 @@ export class Linter {
     // Rules see the color a paint draws with, which a bound paint stores as its variable gave it.
     return {
       id: raw.id,
-      name: raw.name,
+      name: layerNameText(raw.name),
       type: raw.type,
       width: raw.width,
       height: raw.height,
