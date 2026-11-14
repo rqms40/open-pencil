@@ -7,6 +7,7 @@ import type { RekaScope } from '../behaviours'
 import { renderRekaNode } from '../behaviours/render'
 import { componentIdNamed, renderInstanceNode } from '../components/instances'
 import { bindProperties, inferComponentSetProperties } from '../components/properties'
+import { designJSXProp } from '../definitions'
 import { elementNodeType, elementOwnLayer, type OwnLayerRenderer } from '../elements'
 import { applySizeOverrides, propsToOverrides, shapeOverrides } from '../overrides'
 import { placeVectorPaths } from '../overrides/vector'
@@ -151,8 +152,10 @@ function renderSVGNode<Artwork>(
   parentId: string
 ): SceneNode {
   const props = tree.props
-  const explicitW = typeof props.w === 'number' ? props.w : 0
-  const explicitH = typeof props.h === 'number' ? props.h : 0
+  const w = designJSXProp(props, 'w')
+  const h = designJSXProp(props, 'h')
+  const explicitW = typeof w === 'number' ? w : 0
+  const explicitH = typeof h === 'number' ? h : 0
   const size =
     explicitW > 0 || explicitH > 0
       ? Math.max(explicitW, explicitH)
@@ -160,7 +163,7 @@ function renderSVGNode<Artwork>(
   const body =
     (typeof props.body === 'string' && props.body) ||
     tree.children.filter((c): c is string => typeof c === 'string').join('')
-  // The viewBox maps into the layer's own box, which `w` and `h` set apart from the square `size`.
+  // The viewBox maps into the layer's own box, which `w`/`width` and `h`/`height` set apart from the square `size`.
   const box = {
     width: explicitW > 0 ? explicitW : size,
     height: explicitH > 0 ? explicitH : size

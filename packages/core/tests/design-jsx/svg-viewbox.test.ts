@@ -30,6 +30,17 @@ async function iconVector(jsx: string): Promise<SceneNode> {
   )
 }
 
+/** Where a rendered vector sits, and the weight of its stroke. */
+function placedVector(vector: SceneNode) {
+  return {
+    x: vector.x,
+    y: vector.y,
+    width: vector.width,
+    height: vector.height,
+    stroke: expectDefined(vector.strokes[0], 'stroke').weight
+  }
+}
+
 /** The vector's vertices in its frame, where it sits at its own bounds. */
 function placedVertices(vector: SceneNode): Vector[] {
   return (vector.vectorNetwork?.vertices ?? []).map(({ x, y }) => ({
@@ -186,6 +197,26 @@ describe('inline SVG viewBox origin', () => {
       { x: -30, y: 0 }
     ])
     expect(expectDefined(vector.strokes[0], 'stroke').weight).toBe(4)
+  })
+})
+
+describe('inline SVG width and height', () => {
+  const circle = '<circle cx={12} cy={12} r={10} fill="none" stroke="#222222" strokeWidth={1.8} />'
+
+  test('scales a viewBox into the frame the same way w and h do', async () => {
+    const byAlias = placedVector(
+      await iconVector(`<svg viewBox="0 0 24 24" width={20} height={20}>${circle}</svg>`)
+    )
+    const byShorthand = placedVector(
+      await iconVector(`<svg viewBox="0 0 24 24" w={20} h={20}>${circle}</svg>`)
+    )
+
+    expect(byAlias).toEqual(byShorthand)
+    expect(byAlias.x).toBeCloseTo(1.67, 2)
+    expect(byAlias.y).toBeCloseTo(1.67, 2)
+    expect(byAlias.width).toBeCloseTo(16.66, 2)
+    expect(byAlias.height).toBeCloseTo(16.66, 2)
+    expect(byAlias.stroke).toBe(1.5)
   })
 })
 

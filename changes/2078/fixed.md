@@ -1,0 +1,1 @@
+- Inline SVG `width` and `height` scale paths and strokes into the frame, as `w` and `h` do.
