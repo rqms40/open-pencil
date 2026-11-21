@@ -1,0 +1,1 @@
+- Exporting an SVG that was imported with a clipPath keeps the artwork clipped to that path and does not paint the clip shape.

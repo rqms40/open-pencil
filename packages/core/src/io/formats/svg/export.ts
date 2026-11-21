@@ -48,6 +48,7 @@ import {
 import { appendAll } from '@open-pencil/std/arrays'
 
 import { arrowHeadElements, openPathElements, vectorArrowHeads } from './arrows'
+import { renderContainerChildren } from './masks'
 import { svg, svgElement, renderSVGNode } from './node'
 import type { SVGNode } from './node'
 import { fillOutlines, outlineElements } from './regions'
@@ -457,12 +458,9 @@ function drawNode(node: SceneNode, ctx: SVGExportContext): SVGNode | null {
     ctx
   )
 
-  const childNodes = ctx.graph.getChildren(node.id)
-  const childContent: SVGNode[] = []
-  for (const child of childNodes) {
-    const rendered = renderNode(child, ctx)
-    if (rendered) childContent.push(rendered)
-  }
+  const childContent = renderContainerChildren(ctx.graph.getChildren(node.id), ctx, (child) =>
+    renderNode(child, ctx)
+  )
 
   if (clipId && childContent.length > 0) {
     children.push(svgElement('g', { 'clip-path': `url(#${clipId})` }, childContent))
